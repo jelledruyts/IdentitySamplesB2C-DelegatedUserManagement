@@ -1,4 +1,6 @@
+using System;
 using System.IdentityModel.Tokens.Jwt;
+using System.IO;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.AzureADB2C.UI;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -22,6 +24,23 @@ namespace DelegatedUserManagement.WebApp
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // Inject a service to store user invitations.
+            var userInvitationsBasePath = Configuration.GetValue<string>("App:UserInvitationsBasePath");
+            if (string.IsNullOrWhiteSpace(userInvitationsBasePath))
+            {
+                userInvitationsBasePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "UserInvitations");
+            }
+            services.AddSingleton<IUserInvitationRepository>(new FileStorageUserInvitationRepository(userInvitationsBasePath));
+
+            // Inject a service to work with Azure AD B2C through the Graph API.
+            var b2cConfigurationSection = Configuration.GetSection("AzureAdB2C");
+            var b2cGraphService = new B2cGraphService(
+                clientId: b2cConfigurationSection.GetValue<string>(nameof(AzureADB2COptions.ClientId)),
+                domain: b2cConfigurationSection.GetValue<string>(nameof(AzureADB2COptions.Domain)),
+                clientSecret: b2cConfigurationSection.GetValue<string>(nameof(AzureADB2COptions.ClientSecret)),
+                b2cExtensionsAppClientId: b2cConfigurationSection.GetValue<string>("B2cExtensionsAppClientId"));
+            services.AddSingleton<B2cGraphService>(b2cGraphService);
+
             // Configure support for the SameSite cookies breaking change.
             services.ConfigureSameSiteCookiePolicy();
 
@@ -37,9 +56,13 @@ namespace DelegatedUserManagement.WebApp
             {
                 // Don't remove any incoming claims.
                 options.ClaimActions.Clear();
+
+                // Set the "role" claim type to be the "extension_DelegatedUserManagementRole" user attribute.
+                options.TokenValidationParameters.RoleClaimType = b2cGraphService.GetUserAttributeClaimName(Constants.UserAttributes.DelegatedUserManagementRole);
             });
 
             services.AddRazorPages();
+            services.AddControllers();
             services.AddRouting(options => { options.LowercaseUrls = true; });
         }
 
