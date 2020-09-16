@@ -30,11 +30,11 @@ namespace DelegatedUserManagement.WebApp.Pages
 
         public async Task<IActionResult> OnGetAsync()
         {
-            var globalAdminUserInvitation = await this.userInvitationRepository.GetRedeemedUserInvitationAsync(GlobalAdminInvitationCode);
-            if (globalAdminUserInvitation == null)
+            var allUsers = await this.b2cGraphService.GetUsersAsync();
+            if (!allUsers.Any())
             {
-                // If the global admin user invitation was not redeemed yet, allow anonymous access to bootstrap the initial global admin.
-                globalAdminUserInvitation = new UserInvitation
+                // If there aren't any users yet, allow anonymous access to bootstrap the initial global admin.
+                var globalAdminUserInvitation = new UserInvitation
                 {
                     InvitationCode = GlobalAdminInvitationCode,
                     CompanyId = null,
@@ -80,7 +80,6 @@ namespace DelegatedUserManagement.WebApp.Pages
             return this.Page();
         }
 
-        [Authorize]
         public async Task<IActionResult> OnPostAsync(UserInvitationRequest userInvitationRequest)
         {
             // Check that the current user has permissions to create the invitation.
@@ -115,7 +114,6 @@ namespace DelegatedUserManagement.WebApp.Pages
             return RedirectToPage();
         }
 
-        [Authorize]
         public async Task<IActionResult> OnPostDeleteUserInvitationAsync(string invitationCode)
         {
             // Check that the current user has permissions to delete the invitation.

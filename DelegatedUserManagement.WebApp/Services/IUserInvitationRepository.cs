@@ -7,7 +7,6 @@ namespace DelegatedUserManagement.WebApp
     {
         Task CreateUserInvitationAsync(UserInvitation userInvitation);
         Task<UserInvitation> GetPendingUserInvitationAsync(string invitationCode);
-        Task<UserInvitation> GetRedeemedUserInvitationAsync(string invitationCode);
         Task RedeemUserInvitationAsync(string invitationCode);
         Task DeletePendingUserInvitationAsync(string invitationCode);
         Task<IList<UserInvitation>> GetPendingUserInvitationsAsync(string companyId = null);
