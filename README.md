@@ -4,7 +4,27 @@ This repository contains a Visual Studio (Code) solution that demonstrates deleg
 
 **IMPORTANT NOTE: The code in this repository is _not_ production-ready. It serves only to demonstrate the main points via minimal working code, and contains no exception handling or other special cases. Refer to the official documentation and samples for more information. Similarly, by design, it does not implement any caching or data persistence (e.g. to a database) to minimize the concepts and technologies being used.**
 
+## Scenario
+
+While Azure AD B2C is often used for "open" sign up scenarios, where _any user_ can self-register an account and access the application (e.g. in e-commerce or open community scenarios), it can also be used for a more closed environment where only users who are explicitly invited can register an account.
+
+This sample demonstrates such a scenario by using an "invitation code" based sign up flow, which allows users to register for an account through any of the regular supported identity providers (local, social or federated accounts). However, before they are actually allowed to create the account they will need to enter an invitation code which they received from an administrator of the application. Without a valid invitation code, they cannot sign up.
+
+> Alternatively, the administrator could also pre-create the user in Azure AD B2C (e.g. manually in the Azure Portal or through the Graph API) and send them a password reset link to allow them to sign in to their newly created account. However, this has the downside that it does not allow the end user to choose which identity they want to sign in with (i.e. a local, social or federated identity): the administrator must already choose that when the user account is pre-created on their behalf. It also has the disadvantage that users who never actually access the application will still have an inactive "ghost" account in the directory.
+
+This sample goes one step further in that it also supports _delegated_ user management, where there aren't just administrators who can invite users, but they can delegate user management for a certain subset of users to others. Imagine that the application is a Software-as-a-Service solution that the vendor is selling to their customers (companies). They will want to have a few "global" administrators in the back-office who can sign up new customers (companies) and invite delegated user administrators for those companies. These company administrators in turn have permissions to invite other users, but _only for their own company_.
+
+This means that for this sample, there are 3 personas (i.e. application roles):
+
+- **Global Administrators** who can invite anyone and manage all users
+- **Company Administrators** who can only invite and manage users for their own company
+- **Company Users** who can use the application but cannot invite or manage any users
+
+The user's role, as well as the company identifier that they belong to (or blank for global administrators) are stored in Azure AD B2C as custom user attributes and are therefore issued as claims inside the token issued by Azure AD B2C so that the application has this information available directly.
+
 ## Setup
+
+To run this sample successfully, complete the following steps:
 
 - Create custom user attributes in B2C:
   - `CompanyId` (String): The identifier of the user's company.
