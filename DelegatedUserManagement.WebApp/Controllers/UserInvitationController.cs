@@ -113,6 +113,11 @@ namespace DelegatedUserManagement.WebApp.Controllers
                 { this.b2cGraphService.GetUserAttributeExtensionName(Constants.UserAttributes.CompanyId), userInvitation?.CompanyId },
                 { this.b2cGraphService.GetUserAttributeExtensionName(Constants.UserAttributes.DelegatedUserManagementRole), userInvitation?.DelegatedUserManagementRole }
             };
+            if (statusCode != 200)
+            {
+                // Include the status in the body as well, but only for validation errors.
+                responseProperties["status"] = statusCode.ToString();
+            }
             return new JsonResult(responseProperties) { StatusCode = statusCode };
         }
     }
