@@ -76,7 +76,7 @@ namespace DelegatedUserManagement.WebApp.Controllers
                         // At this point, the invitation can be deleted again as it has been redeemed.
                         await this.userInvitationRepository.RedeemUserInvitationAsync(invitationCode);
 
-                        return GetAllowApiResponse("UserInvitationRedemptionSucceeded", "The invitation code you provided is valid.", userInvitation);
+                        return GetContinueApiResponse("UserInvitationRedemptionSucceeded", "The invitation code you provided is valid.", userInvitation);
                     }
                 }
             }
@@ -87,14 +87,14 @@ namespace DelegatedUserManagement.WebApp.Controllers
             }
         }
 
-        private IActionResult GetAllowApiResponse(string code, string userMessage, UserInvitation userInvitation)
+        private IActionResult GetContinueApiResponse(string code, string userMessage, UserInvitation userInvitation)
         {
-            return GetB2cApiConnectorResponse("Allow", code, userMessage, 200, userInvitation);
+            return GetB2cApiConnectorResponse("Continue", code, userMessage, 200, userInvitation);
         }
 
         private IActionResult GetValidationErrorApiResponse(string code, string userMessage)
         {
-            return GetB2cApiConnectorResponse("ValidationError", code, userMessage, 409, null);
+            return GetB2cApiConnectorResponse("ValidationError", code, userMessage, 400, null);
         }
 
         private IActionResult GetBlockPageApiResponse(string code, string userMessage)
@@ -108,10 +108,9 @@ namespace DelegatedUserManagement.WebApp.Controllers
             {
                 { "version", "1.0.0" },
                 { "action", action },
-                { "code", code },
                 { "userMessage", userMessage },
-                { this.b2cGraphService.GetUserAttributeExtensionName(Constants.UserAttributes.CompanyId), userInvitation?.CompanyId },
-                { this.b2cGraphService.GetUserAttributeExtensionName(Constants.UserAttributes.DelegatedUserManagementRole), userInvitation?.DelegatedUserManagementRole }
+                { this.b2cGraphService.GetUserAttributeExtensionName(Constants.UserAttributes.CompanyId), userInvitation?.CompanyId }, // Note: returning just "extension_<AttributeName>" (without the App ID) would work as well!
+                { this.b2cGraphService.GetUserAttributeExtensionName(Constants.UserAttributes.DelegatedUserManagementRole), userInvitation?.DelegatedUserManagementRole } // Note: returning just "extension_<AttributeName>" (without the App ID) would work as well!
             };
             if (statusCode != 200)
             {
